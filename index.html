@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Golf Slot Game</title>
+  <style>
+    /* ── COLOR PALETTE ───────────────────────────────────────── */
+    :root {
+      --green-dark: #387442;
+      --green-light: #7ec850;
+      --white: #ffffff;
+      --gray-light: #f4f4f4;
+      --gray-med: #cccccc;
+      --gray-dark: #555555;
+      --accent: #ebc634;
+    }
+
+    /* ── BASE ─────────────────────────────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--green-light), var(--green-dark));
+      color: var(--gray-dark);
+      padding: 1rem;
+    }
+    h1,h2,h3 { text-align: center; margin-bottom: .5rem; }
+    h1 { color: var(--accent); font-size: 2rem; text-shadow: 1px 1px 2px rgba(0,0,0,.2); }
+
+    /* ── CARDS ────────────────────────────────────────────────── */
+    #setup, #game {
+      background: rgba(255,255,255,.9);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.1);
+      margin: 1rem auto;
+      max-width: 600px;
+      padding: 1.5rem;
+    }
+
+    /* ── FORM — SETUP ─────────────────────────────────────────── */
+    #setup input {
+      width: 100%; padding: .6rem; margin: .4rem 0;
+      border: 1px solid var(--gray-med); border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    /* ── BUTTONS ─────────────────────────────────────────────── */
+    button {
+      display: block; width: 100%;
+      background: var(--green-dark); color: var(--white);
+      border: none; border-radius: 4px;
+      padding: .8rem; font-size: 1rem; font-weight: 600;
+      margin: .8rem 0; cursor: pointer;
+      transition: background .2s;
+    }
+    button:hover {
+      background: var(--accent); color: var(--green-dark);
+    }
+
+    /* ── SLOT MACHINE ────────────────────────────────────────── */
+    .slot-machine {
+      display: flex; justify-content: center; gap: .5rem; margin: 1rem 0;
+    }
+    .reel {
+      flex: 1; background: var(--white); border: 2px solid var(--gray-med);
+      border-radius: 8px; height: 60px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; box-shadow: inset 0 2px 4px rgba(0,0,0,.1);
+    }
+    .reel.spin { transform: translateY(-5px); }
+
+    /* ── TABLE CONTAINER ─────────────────────────────────────── */
+    .table-scroll {
+      overflow-x: auto;
+      margin: 0 -1.5rem;
+      padding: 0 1.5rem;
+    }
+    #scoreTable {
+      margin: 0;
+      width: auto;
+    }
+
+    /* ── TABLES ───────────────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      background: var(--white);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    thead {
+      position: sticky; top: 0;
+      background: var(--green-dark); color: var(--white);
+    }
+    th, td {
+      padding: .6rem; text-align: center; border-bottom: 1px solid var(--gray-med);
+    }
+    tbody tr:nth-child(odd) { background: var(--gray-light); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ── RESULT TEXT ─────────────────────────────────────────── */
+    #result {
+      text-align: center; font-weight: bold; margin: 1rem 0;
+    }
+
+    /* ── UTILITIES ───────────────────────────────────────────── */
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <h1>⛳ Golf Slot Game</h1>
+
+  <!-- SETUP -->
+  <div id="setup">
+    <h2>Enter Player Names</h2>
+    <input id="name1" placeholder="Player 1"/>
+    <input id="name2" placeholder="Player 2"/>
+    <input id="name3" placeholder="Player 3 (optional)"/>
+    <input id="name4" placeholder="Player 4 (optional)"/>
+    <button id="startBtn">Start Game</button>
+  </div>
+
+  <!-- GAME -->
+  <div id="game" class="hidden">
+    <h2>Hole <span id="currentHole">1</span></h2>
+    <h3>Current Player: <span id="currentPlayer"></span></h3>
+
+    <div class="slot-machine">
+      <div class="reel" id="club1">🎲</div>
+      <div class="reel" id="club2">🎲</div>
+      <div class="reel" id="club3">🎲</div>
+    </div>
+    <div id="result">Press “Spin!”</div>
+    <button id="spinBtn">Spin!</button>
+    <button id="finishBtn" class="hidden">Finish Hole</button>
+
+    <!-- Spin Results -->
+    <h3>Spin Results (This Hole)</h3>
+    <table>
+      <thead><tr><th>Hole</th><th>Player</th><th>Clubs</th><th>Bonus</th></tr></thead>
+      <tbody id="spinBody"></tbody>
+    </table>
+
+    <!-- Scores -->
+    <h3>Scores</h3>
+    <div class="table-scroll">
+      <table id="scoreTable">
+        <thead>
+          <tr id="scoreHead">
+            <th>Player</th>
+            <!-- JS will inject Hole 1..18 here -->
+            <th>Outstanding Perks</th>
+          </tr>
+        </thead>
+        <tbody id="scoreBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Points -->
+    <h3>Points</h3>
+    <table>
+      <thead><tr><th>Player</th><th>Points</th></tr></thead>
+      <tbody id="pointsBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+  (function(){
+    const MAX_HOLES   = 18;
+    const clubs       = ["Driver","Bois 3","Hybrid","5","6","7","8","9","P-Wedge","S-Wedge","Putter"];
+    const specials    = ["Women's tees", "Switch ball", "Mulligan","x2","Reverse Mulligan","Change one club","Gimme"];
+    const star        = "★";
+    const starChances = [1,3,5];
+
+    let players     = [], currentHole = 1, turnIndex = 0, spinResults = [];
+
+    const setupEl   = document.getElementById("setup");
+    const gameEl    = document.getElementById("game");
+    const startBtn  = document.getElementById("startBtn");
+    const spinBtn   = document.getElementById("spinBtn");
+    const finishBtn = document.getElementById("finishBtn");
+    const holeEl    = document.getElementById("currentHole");
+    const playerEl  = document.getElementById("currentPlayer");
+    const r1        = document.getElementById("club1");
+    const r2        = document.getElementById("club2");
+    const r3        = document.getElementById("club3");
+    const resultEl  = document.getElementById("result");
+    const spinBody  = document.getElementById("spinBody");
+    const scoreHead = document.getElementById("scoreHead");
+    const scoreBody = document.getElementById("scoreBody");
+    const pointsBody= document.getElementById("pointsBody");
+
+    function drawClub(avail, weight){
+      const pool = [...avail, ...Array(weight).fill(star)];
+      return pool[Math.floor(Math.random()*pool.length)];
+    }
+
+    function updateUI(){
+      holeEl.textContent   = currentHole;
+      playerEl.textContent = players[turnIndex].name;
+      [r1,r2,r3].forEach(el=>el.textContent="🎲");
+      resultEl.textContent = "Press “Spin!”";
+    }
+
+    function buildScoreTable(){
+      for(let h=1; h<=MAX_HOLES; h++){
+        const th = document.createElement("th");
+        th.textContent = `Hole ${h}`;
+        scoreHead.insertBefore(th, scoreHead.lastElementChild);
+      }
+      const parRow = document.createElement("tr");
+      parRow.id = "par-row";
+      parRow.innerHTML = "<td>Par</td>";
+      for(let h=1; h<=MAX_HOLES; h++){
+        parRow.innerHTML += `<td id="par-h${h}"></td>`;
+      }
+      parRow.innerHTML += "<td></td>";
+      scoreBody.appendChild(parRow);
+
+      players.forEach((P,pi)=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${P.name}</td>`;
+        for(let h=1; h<=MAX_HOLES; h++){
+          tr.innerHTML += `<td id="score-p${pi}-h${h}"></td>`;
+        }
+        tr.innerHTML += `<td id="score-p${pi}-perk"></td>`;
+        scoreBody.appendChild(tr);
+      });
+    }
+
+    function buildPointsTable(){
+      players.forEach((P,pi)=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${P.name}</td><td id="points-p${pi}">0</td>`;
+        pointsBody.appendChild(tr);
+      });
+    }
+
+    startBtn.onclick = ()=>{
+      const names = [1,2,3,4]
+        .map(i=>document.getElementById(`name${i}`).value.trim())
+        .filter(n=>n);
+      if(names.length<2) names.splice(0,2,"Player 1","Player 2");
+      players = names.map(n=>({
+        name:n, pendingMulligan:0, pendingReverse:0, pendingX2:0, points:0
+      }));
+      setupEl.classList.add("hidden");
+      gameEl.classList.remove("hidden");
+      spinBody.innerHTML   = "";
+      scoreHead.querySelectorAll("th:not(:first-child):not(:last-child)").forEach(n=>n.remove());
+      scoreBody.innerHTML  = "";
+      pointsBody.innerHTML = "";
+      buildScoreTable();
+      buildPointsTable();
+      currentHole=1; turnIndex=0; spinResults=[];
+      spinBtn.disabled=false;
+      finishBtn.classList.add("hidden");
+      updateUI();
+    };
+
+    spinBtn.onclick = ()=>{
+      const P=players[turnIndex], used=[], outs=[];
+      for(let i=0;i<3;i++){
+        const w=(i>0&&outs[i-1]===star)?starChances[i]:starChances[0];
+        const pick=drawClub(clubs.filter(c=>!used.includes(c)),w);
+        if(pick!==star) used.push(pick);
+        outs.push(pick);
+      }
+      const bonus=specials[Math.floor(Math.random()*specials.length)];
+      if(bonus==="Mulligan")P.pendingMulligan++;
+      if(bonus==="x2")P.pendingX2++;
+      if(bonus==="Reverse Mulligan")P.pendingReverse++;
+      [r1,r2,r3].forEach((el,i)=>el.textContent=outs[i]);
+      resultEl.textContent=`${P.name}: ${outs.join(", ")} — Bonus: ${bonus}`;
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${currentHole}</td><td>${P.name}</td><td>${outs.join(", ")}</td><td>${bonus}</td>`;
+      spinBody.appendChild(tr);
+      spinResults.push({playerIndex:turnIndex});
+      if(turnIndex===players.length-1){
+        spinBtn.disabled=true;
+        finishBtn.classList.remove("hidden");
+      } else {
+        turnIndex++;
+        updateUI();
+      }
+    };
+
+    finishBtn.onclick = ()=>{
+      const p=Number(prompt(`Enter PAR for hole ${currentHole}:`,""))||0;
+      document.getElementById(`par-h${currentHole}`).textContent=p;
+      spinResults.forEach(entry=>{
+        const pi=entry.playerIndex, P=players[pi];
+        const sc=Number(prompt(`${P.name}, enter score:`,""))||0;
+        document.getElementById(`score-p${pi}-h${currentHole}`).textContent=sc;
+        if(P.pendingMulligan>0&&confirm(`${P.name}, use a Mulligan?`))P.pendingMulligan--;
+        if(P.pendingReverse>0&&confirm(`${P.name}, use a Reverse?`))P.pendingReverse--;
+        const perks=[]; 
+        if(P.pendingMulligan)perks.push(`Mulligan${P.pendingMulligan>1?` x${P.pendingMulligan}`:""}`);
+        if(P.pendingReverse) perks.push(`Reverse${P.pendingReverse>1?` x${P.pendingReverse}`:""}`);
+        document.getElementById(`score-p${pi}-perk`).textContent=perks.join(", ");
+        const diff=sc-p, pts=diff>=2?0:diff===1?1:diff===0?2:diff===-1?3:diff===-2?4:5;
+        const finalPts=P.pendingX2>0?(P.pendingX2--,pts*2):pts;
+        P.points+=finalPts;
+        document.getElementById(`points-p${pi}`).textContent=P.points;
+      });
+      currentHole++; turnIndex=0; spinResults=[];
+      spinBtn.disabled=false;
+      finishBtn.classList.add("hidden");
+      spinBody.innerHTML="";
+      updateUI();
+    };
+  })();
+  </script>
+</body>
+</html>
